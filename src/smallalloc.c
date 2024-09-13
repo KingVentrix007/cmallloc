@@ -5,6 +5,8 @@
 #include "def.h"
 #include "smallalloc.h"
 #include <stdio.h>
+#include "alloc.h"
+#include <string.h>
 //Flag to determine if the memory heap is setup
 
 uint8_t  *small_heap = NULL; // The memory heap for allocations less than MAX_SIZE_SMALL_ALLOC bytes;
@@ -29,6 +31,7 @@ void *small_malloc(size_t size) {
 }
 void *salloc(size_t size)
 {
+    size+=sizeof(memory_alloc_t);
     size_t num_blocks_needed = (size + SMALL_BLOCK_SIZE - 1) / SMALL_BLOCK_SIZE;
     printf("Trying to allocate %ld blocks of %d bytes for %ld sized region\n",num_blocks_needed,SMALL_BLOCK_SIZE,size);
 
@@ -52,7 +55,7 @@ void *salloc(size_t size)
             }
             num_found_bits+=8;
             end_byte_index = i;
-            end_bit_index = 0;
+            end_bit_index = 8;
            
         }
         else
@@ -85,9 +88,142 @@ void *salloc(size_t size)
         if(num_found_bits >= num_blocks_needed)
         {
             printf("Found %zu bits, starting at byte %zu, bit %d ending at byte %zu, bit %d\n", num_found_bits, start_byte_index, start_bit_index, end_byte_index, end_bit_index);
-            return NULL;
+            printf("Allocted region of memory of size %ld\n",num_found_bits*SMALL_BLOCK_SIZE);
+            void *adder = small_heap + (start_byte_index * 8 + (size_t)start_bit_index) * SMALL_BLOCK_SIZE;
+
+            size_t bits_to_set = num_blocks_needed;
+            size_t current_byte = start_byte_index;
+            int current_bit = start_bit_index;
+
+            while (bits_to_set > 0) 
+            {
+                bitmap[current_byte] |= (uint8_t)(1 << (7 - current_bit));
+                bits_to_set--;
+                current_bit++;
+                if (current_bit == 8) {
+                    current_bit = 0;
+                    current_byte++;
+                }
+            }
+            #ifdef DEBUG
+            bits_to_set = num_blocks_needed;
+            current_byte = start_byte_index;
+            current_bit = start_bit_index;
+
+            while (bits_to_set > 0) 
+            {
+                uint8_t bit = (bitmap[current_byte] >> (7 - current_bit)) & 1;
+                printf("Byte %zu, Bit %d: %d\n", current_byte, current_bit, bit);
+                bits_to_set--;
+                current_bit++;
+                if (current_bit == 8) {
+                    current_bit = 0;
+                    current_byte++;
+                }
+            }
+            #endif
+            memory_alloc_t data;
+            data.size = size -= sizeof(memory_alloc_t);
+            data.ptr =  (void *)((char *)adder + sizeof(memory_alloc_t)); 
+            data.dirty = false;
+            memcpy(adder, &data, sizeof(memory_alloc_t));
+            printf("data %p\n",data.ptr);
+
+            return data.ptr;
+            // return adder;
         }
     }
     return NULL;
     
+}
+
+
+void print_bits(size_t start_bit, size_t num_bits) {
+    size_t byte_pos = start_bit / 8;
+    size_t bit_pos = start_bit % 8;
+    for (size_t i = 0; i < num_bits; i++) {
+        printf("%d", (bitmap[byte_pos] & (1 << (7 - bit_pos))) ? 1 : 0);
+        bit_pos++;
+        if (bit_pos == 8) {
+            bit_pos = 0;
+            byte_pos++;
+        }
+        if ((i + 1) % 8 == 0) {
+            printf(" ");
+        }
+    }
+    printf("\n");
+}
+
+/**
+ * Frees a small memory block.
+ *
+ * This function is responsible for freeing a small memory block that was 
+ * previously allocated. It ensures that the memory is properly deallocated 
+ * and can be reused by the system.
+ *
+ * @param ptr A pointer to the memory block to be freed. This pointer must 
+ *            have been returned by a previous call to a memory allocation 
+ *            function.
+ * @return An integer indicating the success or failure of the operation.
+ *         Typically, 0 indicates success, while a non-zero value indicates 
+ *         an error.
+ */
+int small_free(void *ptr)
+{
+    if(ptr == NULL)
+    {
+        return -1;
+    }
+
+    memory_alloc_t *data = (memory_alloc_t *)((char *)ptr - sizeof(memory_alloc_t));
+    ptr = (char *)ptr - sizeof(memory_alloc_t);
+    printf("data %p\n", data->ptr);
+
+    size_t num_blocks_needed = (data->size + sizeof(memory_alloc_t) + SMALL_BLOCK_SIZE - 1) / SMALL_BLOCK_SIZE;
+
+    size_t start_byte_index = ((uintptr_t)ptr - (uintptr_t)small_heap) / SMALL_BLOCK_SIZE;
+    size_t start_bit_index = ((uintptr_t)ptr - (uintptr_t)small_heap) % SMALL_BLOCK_SIZE;
+    printf("Starting at byte %zu, bit %zu\n", start_byte_index, start_bit_index);
+
+    size_t bits_to_set = num_blocks_needed;
+    size_t current_byte = start_byte_index;
+    int current_bit = start_bit_index;
+    printf("Unsetting %zu bits\n", bits_to_set);
+
+    while (bits_to_set > 0)
+    {
+        if (current_byte >= sizeof(bitmap)) {
+            printf("Error: Byte index out of bounds\n");
+            return -1;
+        }
+        
+        uint8_t mask = ~(1 << (7 - current_bit));
+
+        bitmap[current_byte] &= mask;  // Unset the bit
+        uint8_t new_bit = (bitmap[current_byte] >> (7 - current_bit)) & 1;
+        if ((bitmap[current_byte] & (1 << (7 - current_bit))) != 0)
+        {
+            printf("Error: Bit %d in byte %zu is still set\n", current_bit, current_byte);
+            return -1;
+        }
+        // printf("Cleared bit %d in byte %zu, bitmap[current_byte] == 0x%02X\n", current_bit, current_byte, bitmap[current_byte]);
+        #ifdef DEBUG
+        printf("Byte %ld, Bit %d: %d\n", current_byte, current_bit, new_bit);
+        #endif
+        bits_to_set--;
+        current_bit++;
+        if (current_bit == 8) {
+            current_bit = 0;
+            current_byte++;
+        }
+    }
+    return 0;
+}
+
+
+int sfree(void *ptr)
+{
+    printf("%p\n",ptr);
+    return 0;
 }

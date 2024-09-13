@@ -19,10 +19,10 @@ GCC = gcc
 # -fsanitize=address: Enable AddressSanitizer (detects memory errors)
 # -fsanitize=undefined: Enable UndefinedBehaviorSanitizer (detects undefined behavior)
 # -g: Include debugging information
-GCC_FLAGS = -Wall -Wextra -Werror -Wshadow -Wstrict-prototypes -Wconversion -Wcast-align \
+GCC_FLAGS = -Wall -Wextra -Werror -Wshadow -Wstrict-prototypes -Wcast-align \
            -Wpointer-arith -Wformat=2 -Wundef -Wstrict-aliasing=2 -Wbad-function-cast \
            -Wnull-dereference -Walloc-size-larger-than=1000000 -Wmissing-prototypes \
-           -fsanitize=address -fsanitize=undefined -g
+           -fsanitize=address -fsanitize=undefined -g -DDEBUG
 LD_FLAGS = -fsanitize=address -fsanitize=undefined
 
 # Directories

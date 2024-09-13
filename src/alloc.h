@@ -11,5 +11,6 @@ typedef struct
     uint8_t *ptr; // ptr of the allocation;
 }memory_alloc_t;
 
+#define ALLOC_STRUCT_SIZE sizeof(memory_alloc_t);
 
 #endif  
