@@ -16,7 +16,7 @@ int main(void)
         return -1;
     }
     char *test_string = "Testing allocation\n";
-    strncpy(test_alloc_small,test_string,strlen(test_string));
+    strcpy(test_alloc_small,test_string);
     if(strcmp(test_string,test_alloc_small)!=0)
     {
         printf("Strings do not match\n");
@@ -35,7 +35,7 @@ int main(void)
         return -1;
     }
     char *test_string_2 = "Diffrent data\n";
-    strncpy(test_alloc_small_2,test_string_2,strlen(test_string_2));
+    strcpy(test_alloc_small_2,test_string_2);
     if(strcmp(test_string_2,test_alloc_small_2)!=0)
     {
         printf("Strings do not match\n");
