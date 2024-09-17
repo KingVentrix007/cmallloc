@@ -15,4 +15,6 @@ typedef struct
 #define ALLOC_STRUCT_SIZE sizeof(memory_alloc_t);
 void *cmalloc(size_t size);
 int cfree(void *ptr);
+void *crealloc(void *ptr, unsigned int old_size, unsigned int new_size);
+void* ccalloc(size_t num_elements, size_t element_size) ;
 #endif  

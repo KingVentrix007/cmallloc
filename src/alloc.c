@@ -88,3 +88,31 @@ int cfree(void *ptr)
         return large_free(ptr);
     }
 }
+
+void *crealloc(void *ptr, unsigned int old_size, unsigned int new_size)
+{
+    void * new_adder = cmalloc(new_size);
+    if(new_adder == NULL)
+    {
+        return NULL;
+    }
+    memcpy(new_adder,ptr,old_size);
+    memset(ptr,0,old_size);
+    cfree(ptr);
+    return new_adder;
+}
+
+void* ccalloc(size_t num_elements, size_t element_size) {
+    // Calculate total memory required
+    size_t total_size = num_elements * element_size;
+
+    // Use your custom malloc to allocate the memory
+    void* ptr = cmalloc(total_size);
+
+    // If allocation was successful, initialize memory to zero
+    if (ptr != NULL) {
+        memset(ptr, 0, total_size); // Set all bytes to 0
+    }
+
+    return ptr; // Return the allocated and zero-initialized memory
+}

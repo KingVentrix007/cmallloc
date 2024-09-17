@@ -48,17 +48,5 @@ int main(void)
         printf("Allocation for test_alloc_small_2 worked\n");
     }
     printf("%d\n",cfree(test_alloc_small_2));
-    // printf("test_alloc_small  : %p\n",test_alloc_small);
-    // printf("test_alloc_small_2: %p\n",test_alloc_small_2);
-    // printf("%d\n",cfree(test_alloc_small));
-    //  printf("%d\n",cfree(test_alloc_small_2));
-    // printf("Expanding medium region\n");
-    // void* end = step_through_nodes();
-    // expand_medium_region();
-    // void *new_end_2 = step_through_nodes();
-    // printf("test_alloc_small  : %s\n",test_alloc_small);
-    // printf("Region ended at %p\n",end);
-    // printf("New region ended at %p\n",new_end);
-    // printf("New region ended at %p\n",new_end_2);
     return 0;
 }
