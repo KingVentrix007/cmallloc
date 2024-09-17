@@ -28,7 +28,7 @@ void *cmalloc(size_t size)
     {
         if(memory_small_heap_initiated != true)
         {
-            printf("Setting up memory heap\n");
+            // printf("Setting up memory heap\n");
             int ret = init_small_memory_heap(); // Initialize the memory heap
             if(ret != 0)
             {
@@ -45,7 +45,7 @@ void *cmalloc(size_t size)
     {
         if(memory_medium_heap_initiated != true)
         {
-            printf("Setting up memory heap\n");
+            // printf("Setting up memory heap\n");
             int ret = init_medium_memory_heap(); // Initialize the memory heap
             if(ret != 0)
             {
@@ -58,6 +58,7 @@ void *cmalloc(size_t size)
         }
         return medalloc(size);
     }
+    // printf("Well this happend\n");
     return NULL;
 }
 

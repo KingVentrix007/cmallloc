@@ -18,7 +18,7 @@ int init_count = 0;
 void *small_malloc(size_t size) {
     if(memory_small_heap_initiated != true)
     {
-        printf("Setting up memory heap\n");
+        // printf("Setting up memory heap\n");
         int ret = init_small_memory_heap(); // Initialize the memory heap
         if(ret != 0)
         {
