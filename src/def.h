@@ -1,6 +1,7 @@
 #ifndef __DEF__H
 #define __DEF__H
 #include "medalloc.h"
+#include <sys/mman.h>
 #define ALLOC_THRESHOLD 1024 // Max size of a small allocations
 #define MAX_SIZE_SMALL_ALLOC 256 // the max size of a small allocation
 #define STARTING_SIZE_SMALL_ALLOC 1024 // The starting number of small allocations
@@ -35,4 +36,7 @@
 #define MEDIUM_BLOCK_SIZE 1024
 
 #define MEDIUM_HEAP_NODES_SIZE (MEDIUM_HEAP_SIZE/MEDIUM_BLOCK_SIZE)*sizeof(block_t)
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS 0x20
+#endif
 #endif

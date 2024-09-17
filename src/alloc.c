@@ -8,6 +8,8 @@
 #include "alloc.h"
 #include <string.h>
 #include <unistd.h>
+#include "largealloc.h"
+#include "medalloc.h"
 void *small_region_start = NULL; //Start address for the small allocations
 void *small_region_end = NULL;// End address for the small allocations
 
@@ -58,6 +60,11 @@ void *cmalloc(size_t size)
         }
         return medalloc(size);
     }
+    else if (size > (size_t)page_size)
+    {
+        return large_alloc(size);
+    }
+    printf("I have absolutely no idea what you passed to get here\n");
     // printf("Well this happend\n");
     return NULL;
 }
@@ -67,10 +74,6 @@ int cfree(void *ptr)
     if(ptr == NULL)
     {
         return -1;
-    }
-    if(memory_small_heap_initiated != true || memory_medium_heap_initiated != true)
-    {
-        return -2;
     }
     if(ptr >= small_region_start && ptr < small_region_end)
     {
@@ -82,6 +85,6 @@ int cfree(void *ptr)
     }
     else
     {
-        return -3;
+        return large_free(ptr);
     }
 }

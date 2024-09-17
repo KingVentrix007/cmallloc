@@ -173,6 +173,10 @@ int expand_medium_region()
 int expand_medium_heap()
 {
     // Setup new heap
+    if(memory_medium_heap_initiated == false)
+    {
+        return -1;
+    }
     void *tmp_region = mmap(NULL, MEDIUM_HEAP_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(tmp_region == MAP_FAILED)
     {
@@ -221,7 +225,6 @@ int expand_medium_nodes()
 // #include <stdio.h> // Include for debug printing
 
 
-//TODO Allocate new memory for the new nodes
 int setup_expand_medium_nodes()
 {
     block_t *current_node = (block_t *)nodes;

@@ -26,7 +26,7 @@ int main(void)
     }
     else
     {
-        // printf("Allocation for test_alloc_small worked\n");
+        printf("Allocation for test_alloc_small worked\n");
     }
     char *test_alloc_small_2 = cmalloc(1024*1024);
     if(test_alloc_small_2 == NULL)
@@ -45,15 +45,16 @@ int main(void)
     }
     else
     {
-        // printf("Allocation for test_alloc_small_2 worked\n");
+        printf("Allocation for test_alloc_small_2 worked\n");
     }
+    printf("%d\n",cfree(test_alloc_small_2));
     // printf("test_alloc_small  : %p\n",test_alloc_small);
     // printf("test_alloc_small_2: %p\n",test_alloc_small_2);
     // printf("%d\n",cfree(test_alloc_small));
     //  printf("%d\n",cfree(test_alloc_small_2));
     // printf("Expanding medium region\n");
     // void* end = step_through_nodes();
-    expand_medium_region();
+    // expand_medium_region();
     // void *new_end_2 = step_through_nodes();
     // printf("test_alloc_small  : %s\n",test_alloc_small);
     // printf("Region ended at %p\n",end);
