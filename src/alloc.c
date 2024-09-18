@@ -45,6 +45,7 @@ void *cmalloc(size_t size)
     }
     else if (size >= ALLOC_THRESHOLD && size <= (size_t)page_size)
     {
+        // printf("Med alloc\n");
         if(memory_medium_heap_initiated != true)
         {
             // printf("Setting up memory heap\n");
@@ -58,7 +59,17 @@ void *cmalloc(size_t size)
             medium_region_end = medium_heap+current_medium_heap_size;
             memory_medium_heap_initiated = true;
         }
-        return medalloc(size);
+        void *ptr =  medalloc(size);
+        if(ptr >= medium_region_start && ptr < medium_region_end)
+        {
+            return ptr;
+        }
+        else
+        {
+            printf("ptr is invalid\v");
+            return NULL;
+        }
+        
     }
     else if (size > (size_t)page_size)
     {

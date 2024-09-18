@@ -7,46 +7,53 @@
 #include "alloc.h"
 #include "init.h"
 #include "medalloc.h"
-int main(void)
-{
-    char *test_alloc_small = cmalloc(300);
-    if(test_alloc_small == NULL)
-    {
-        printf("Failed to allocate %d bytes of memory for test_alloc_small\n",300);
-        return -1;
+#define ALLOC_BLOCK_SIZE 1025
+#define TEST_ALLOC_LARGE 10000
+unsigned char generate_value(size_t i);
+unsigned char generate_value(size_t i) {
+    return (unsigned char)(i % 256);  // Ensure value fits in one byte
+}
+int main(void) {
+    void *allocs[TEST_ALLOC_LARGE];
+
+    // Allocate memory and set unique values
+    for (size_t i = 0; i < TEST_ALLOC_LARGE; i++) {
+        allocs[i] = cmalloc(ALLOC_BLOCK_SIZE);
+        if (allocs[i] == NULL) {
+            printf("Failed to allocate after %zu allocations\n", i);
+            return -1;
+        }
+
+        // Fill the allocated region with a unique value based on the loop index
+        unsigned char value = generate_value(i);
+        memset(allocs[i], value, ALLOC_BLOCK_SIZE);
+
+        // Check all previous allocations to ensure they have the correct values
+        for (size_t j = 0; j <= i; j++) {
+            unsigned char expected_value = generate_value(j);
+            unsigned char *block = (unsigned char *)allocs[j];
+
+            // Verify the data block
+            for (size_t k = 0; k < ALLOC_BLOCK_SIZE; k++) {
+                if (block[k] != expected_value) {
+                    printf("Data mismatch at allocation %zu, byte %zu. Expected: %u, Got: %u\n", j, k, expected_value, block[k]);
+                    return -1;
+                }
+            }
+        }
+
+        // Optionally, print the progress after every 1000 iterations or so
+        if (i % 1000 == 0) {
+            printf("Allocated and verified %zu blocks\n", i + 1);
+        }
     }
-    char *test_string = "Testing allocation\n";
-    strcpy(test_alloc_small,test_string);
-    if(strcmp(test_string,test_alloc_small)!=0)
-    {
-        printf("Strings do not match\n");
-        printf("test_string: %s\n",test_string);
-        printf("test_alloc_small: %s\n",test_alloc_small);
-        return -1;
-    }
-    else
-    {
-        printf("Allocation for test_alloc_small worked\n");
-    }
-    char *test_alloc_small_2 = cmalloc(1024*1024);
-    if(test_alloc_small_2 == NULL)
-    {
-        printf("Failed to allocate %d bytes of memory for test_alloc_small_2\n",1024*1024);
-        return -1;
-    }
-    char *test_string_2 = "Diffrent data\n";
-    strcpy(test_alloc_small_2,test_string_2);
-    if(strcmp(test_string_2,test_alloc_small_2)!=0)
-    {
-        printf("Strings do not match\n");
-        printf("test_string: %s\n",test_string_2);
-        printf("test_alloc_small: %s\n",test_alloc_small_2);
-        return -1;
-    }
-    else
-    {
-        printf("Allocation for test_alloc_small_2 worked\n");
-    }
-    printf("%d\n",cfree(test_alloc_small_2));
+
+    printf("All allocations and verifications successful.\n");
+
+    // Free allocated memory
+    // for (size_t i = 0; i < TEST_ALLOC_LARGE; i++) {
+    //     free(allocs[i]);
+    // }
+
     return 0;
 }
