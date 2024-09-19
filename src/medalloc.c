@@ -45,7 +45,6 @@ void *medalloc(size_t size)
             printf("Max attempted allocations reached\n");
             return NULL;
         }
-        // printf("Allocation error: %d\n", error);
     }
 
     // Check for other errors
@@ -101,8 +100,9 @@ void *internal_medalloc(size_t size, int *err)
             printf("\tTotal space:      %ld\n",current_medium_heap_size);
             printf("\tTotal Node space: %ld\n",allocs->total_space);
             printf("\tNode space exceeds total space: %s (Total Space: %zu, Medium Heap Size: %zu)\n",
-       allocs->total_space > current_medium_heap_size ? "true" : "false",
-       allocs->total_space, current_medium_heap_size);
+            allocs->total_space > current_medium_heap_size ? "true" : "false",
+            allocs->total_space, current_medium_heap_size);
+            free(allocs);
 
 
             
@@ -272,8 +272,9 @@ medium_analysis_t *find_invalid_nodes()
     size_t medium_allocated_space = 0;
     size_t total_space = 0;
     size_t i = 0;
+    bool exit_loop = false;
 
-    while (current_node != NULL)
+    while (current_node != NULL && !exit_loop)
     {
         // Bounds check
         if ((void *)current_node < (void *)nodes || (void *)current_node >= (void *)((char *)nodes + current_nodes_heap_size))
@@ -288,23 +289,17 @@ medium_analysis_t *find_invalid_nodes()
             if(last_valid_node == NULL)
             {
                 printf("Last valid node is NULL\n");
-                break;
             }
-            if (last_valid_node->next != NULL)
+            else if (last_valid_node->next != NULL)
             {
                 printf("Attempting to repair nodes\n");
-                if (last_valid_node->next == current_node)
-                {
-                    printf("Node %ld points to corrupted node %ld\n", i - 1, i);
-                }
                 last_valid_node->next = NULL;
                 last_valid_node->is_end = true;
             }
-            break;
+            exit_loop = true;
         }
-
         // Check if node is corrupted
-        if (current_node->magic != MAGIC_NUMBER)
+        else if (current_node->magic != MAGIC_NUMBER)
         {
             printf("Node %ld is corrupted\n", i);
             invalid_nodes++;
@@ -314,7 +309,7 @@ medium_analysis_t *find_invalid_nodes()
             if (current_node == NULL) // Use NULL instead of 0 for pointer checks
             {
                 printf("2. Node %ld is corrupted\n", i);
-                break;
+                exit_loop = true;
             }
         }
         else
