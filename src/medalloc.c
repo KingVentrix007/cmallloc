@@ -276,7 +276,7 @@ void *step_through_nodes(void)
 }
 
 //Searches for nodes that are invalid. 
-medium_analysis_t *find_invalid_nodes(void *ptr_find)
+medium_analysis_t *find_invalid_nodes(const void *ptr_find)
 {
     //!WARNING
     // This code operates under the assumption that all of the node region was zero'd
@@ -330,21 +330,28 @@ medium_analysis_t *find_invalid_nodes(void *ptr_find)
         else
         {
             printf("Region = (%ld)%p: %ld bytes from (%ld)%p\n",i,current_node->region,((char *)current_node->region-(char *)last_region),i-1,last_region);
-            if(ptr_find == current_node->region)
+            if(current_node->region != NULL && ptr_find == current_node->region)
             {
                 printf("Found region\n");
-                for (size_t j = 0; j < current_node->size; j++)
+                for (size_t j = 0; j < current_node->size+5; j++)
                 {
+                    
                     printf("%x",((char *)current_node->region)[j]);
+                    if(j == current_node->size)
+                    {
+                        printf("NExt 5 bytes:\n");
+                    }
+                    
                 }
-                printf("\nNext 5 bytes\n");
-                for (size_t j = current_node->size; j < current_node->size+5; j++)
-                {
-                    printf("%x",((char *)current_node->region)[j]);
-                }
+                // printf("\nNext 5 bytes\n");
+                // for (size_t j = current_node->size; j < current_node->size+5; j++)
+                // {
+                //     printf("%x",((char *)current_node->region)[j]);
+                // }
                 printf("\n");
                 
             }
+            
             last_region = current_node->region;
             // Valid node
             if (!current_node->free) // Node is allocated
@@ -374,5 +381,6 @@ size_t get_medalloc_size(const void *ptr)
         }
         current_node = current_node->next;
      }
+     return 0;
 
 }

@@ -16,7 +16,9 @@ unsigned char generate_value(size_t i) {
 }
 int main(void) {
     
-// realloc()
-// calloc()
+
+
+
+    
     return 0;
 }
