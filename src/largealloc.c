@@ -67,3 +67,14 @@ int large_free(void *ptr)
     
 
 }
+size_t get_large_alloc_size(const void *ptr)
+{
+    for (size_t i = 0; i < current_number_large_allocations; i++)
+    {
+        if(large_allocations[i].magic == MAGIC_NUMBER && large_allocations[i].ptr == ptr)
+        {
+            return large_allocations[i].size;
+        }
+    }
+    return 0;
+}

@@ -115,8 +115,8 @@ size_t get_size_cmalloc(const void *ptr)
     }
     else
     {
-        //Freeing of large regions is coming soon
-        //TODO Remap large regions, not move
+        return get_large_alloc_size(ptr);
+        
     }
     return 0;
 }

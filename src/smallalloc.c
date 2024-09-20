@@ -268,7 +268,7 @@ int sfree(void *ptr)
     return 0;
 }
 
-size_t get_smallalloc_size(void *ptr)
+size_t get_smallalloc_size(const void *ptr)
 {
     const memory_alloc_t *data = (memory_alloc_t *)((char *)ptr - sizeof(memory_alloc_t));
     if(data->magic != MAGIC_NUMBER)
