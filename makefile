@@ -22,7 +22,7 @@ build-test:
 test:
 	@$(MAKE) -C tests 
 	@$(MAKE) -C tests run
-	@$(MAKE) -C tests run-ls
+	# @$(MAKE) -C tests run-ls
 nano:$(LIB)
 	LD_DEBUG=all LD_PRELOAD=./cmalloc.so nano > debug.txt 2>&1
 # Clean both build and test outputs

@@ -22,7 +22,7 @@ typedef struct
     size_t total_space;
 }medium_analysis_t;
 void *medalloc(size_t size);
-int medfree(void *ptr);
+int medfree(const void *ptr);
 void *step_through_nodes(void);
 void *internal_medalloc(size_t size, int *err);
 void find_invalid_nodes(const void *ptr_find);

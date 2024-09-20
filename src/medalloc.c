@@ -196,7 +196,7 @@ void *internal_medalloc(size_t size, int *err)
 }
 
 // Function to free allocated memory
-int medfree(void *ptr)
+int medfree(const void *ptr)
 {
     if (ptr == NULL)
     {
