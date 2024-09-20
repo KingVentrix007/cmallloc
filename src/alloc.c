@@ -27,7 +27,15 @@ void free(void *ptr)
 {
     cfree(ptr);
 }
-void *realloc(void *ptr,size_t old_size)
+void *realloc(void *ptr,size_t new_size)
+{
+    size_t old_size = get_size_cmalloc(ptr);
+    return crealloc(ptr,old_size,new_size)
+}
+void *calloc(size_t __nmemb, size_t __size)
+{
+    return ccalloc(__nmemb,__size);
+}
 #endif
 
 
