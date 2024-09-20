@@ -32,7 +32,7 @@ void *large_alloc(size_t size)
     size_t page_size = sysconf(_SC_PAGESIZE);
     //Convert size to the nearest page size
     size_t page_aligned_size = (size + page_size - 1) & ~(page_size - 1);
-    // printf("Allocating %ld bytes\n",page_aligned_size);
+    // printf_debug("Allocating %ld bytes\n",page_aligned_size);
     void *allocation = mmap(NULL, page_aligned_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     
     if(allocation == MAP_FAILED)

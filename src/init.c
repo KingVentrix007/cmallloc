@@ -59,7 +59,9 @@ int init_small_memory_heap() {
 // Initialize the bitmap
 int setup_bitmap() {
     if (bitmap == NULL) {
-        printf("Error: Bitmap is null\n");
+        #ifdef DEBUG
+        printf_debug("Error: Bitmap is null\n");
+        #endif
         return ERR_BITMAP_SETUP_FAILED;
     }
 
@@ -108,7 +110,7 @@ int init_medium_memory_heap() {
 // Initialize the nodes
 int setup_nodes() {
     if (nodes == NULL) {
-        printf("Error: Nodes is null\n");
+        printf_debug("Error: Nodes is null\n");
         return ERR_NODES_SETUP_FAILED;
     }
 
@@ -117,7 +119,7 @@ int setup_nodes() {
 
     for (size_t i = 0; i < current_medium_heap_size / 1024; i++) {
         if (current_node == NULL) {
-            printf("Error: Current node is NULL\n");
+            printf_debug("Error: Current node is NULL\n");
             return ERR_NODES_SETUP_FAILED;
         }
 
@@ -135,12 +137,12 @@ int setup_nodes() {
 
         const block_t *check = (block_t *)(nodes + i * sizeof(block_t));
         if (check == NULL) {
-            printf("Error: Check is NULL\n");
+            printf_debug("Error: Check is NULL\n");
             return ERR_NODES_SETUP_FAILED;
         }
 
         if (check->magic != MAGIC_NUMBER) {
-            printf("Error: Check magic is not MAGIC_NUMBER\n");
+            printf_debug("Error: Check magic is not MAGIC_NUMBER\n");
             return ERR_NODES_SETUP_FAILED;
         }
 
@@ -222,7 +224,7 @@ int expand_medium_nodes() {
     // Allocate new memory for the expanded nodes
     nodes = mmap(node_ptr_save_adder, region_size * 3, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_FIXED, -1, 0);
     if (nodes == MAP_FAILED) {
-        printf("Error: Failed to setup new node region of size %ld\n", region_size * 3);
+        printf_debug("Error: Failed to setup new node region of size %ld\n", region_size * 3);
         return ERR_MMAP_FAILED;
     }
     memset(nodes,0,region_size * 3);
@@ -260,7 +262,7 @@ int setup_expand_medium_nodes() {
         if (found_end_of_region) {
             block_t *block = (block_t *)(nodes + counts * sizeof(block_t));
             if ((void *)block >= end) {
-                printf("Error: Node exceeds the end of nodes region\n");
+                printf_debug("Error: Node exceeds the end of nodes region\n");
                 break;
             }
 

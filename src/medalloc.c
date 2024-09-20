@@ -37,11 +37,11 @@ void *medalloc(size_t size)
     // Retry allocation if there is no space
     while (error == ERR_NO_SPACE)
     {
-        printf("Attempting to expand memory\n");
+        printf_debug("Attempting to expand memory\n");
         int ret = expand_medium_region();
         if(ret != 0)
         {
-            printf("Failed to expand medium memory\n");
+            printf_debug("Failed to expand medium memory\n");
             return NULL;
         }
         ptr = internal_medalloc(size, &error);
@@ -51,12 +51,12 @@ void *medalloc(size_t size)
             // memcmp
             char *test_ptr = (char *)ptr;
             memset(test_ptr,1,size);
-            printf("Size %ld\n",size);
+            printf_debug("Size %ld\n",size);
             for (size_t i = 0; i < size; i++)
             {
                 if(test_ptr[i] != 1)
                 {
-                    printf("Failed alloc\n");
+                    printf_debug("Failed alloc\n");
                     return NULL;
                 }
             }
@@ -65,7 +65,7 @@ void *medalloc(size_t size)
         loop_count++;
         if (loop_count >= 100)
         {
-            printf("Max attempted allocations reached\n");
+            printf_debug("Max attempted allocations reached\n");
             return NULL;
         }
     }
@@ -73,7 +73,7 @@ void *medalloc(size_t size)
     // Check for other errors
     if (error != 0)
     {
-        printf("Allocation failed with error code: %d\n", error);
+        printf_debug("Allocation failed with error code: %d\n", error);
         return NULL;
     }
 
@@ -90,7 +90,7 @@ void *internal_medalloc(size_t size, int *err)
         int ret = init_medium_memory_heap(); // Initialize the memory heap
         if (ret != 0)
         {
-            printf("Failed to initialize the memory heap: %d\n", ret);
+            printf_debug("Failed to initialize the memory heap: %d\n", ret);
             *err = ERR_INIT_FAIL;
             return NULL;
         }
@@ -100,7 +100,7 @@ void *internal_medalloc(size_t size, int *err)
     // Check if there is enough space
     if (allocated_space + size >= current_medium_heap_size)
     {
-        printf("Not enough space in the medium heap\n");
+        printf_debug("Not enough space in the medium heap\n");
         expand_medium_region();
     }
 
@@ -112,7 +112,7 @@ void *internal_medalloc(size_t size, int *err)
     {
         if (current_node->magic != MAGIC_NUMBER)
         {
-            printf("Nodes(Number %ld) are corrupted in single block allocation\n", single_node_counter);
+            printf_debug("Nodes(Number %ld) are corrupted in single block allocation\n", single_node_counter);
             medium_analysis_t *allocs = find_invalid_nodes(NULL);
             if(allocs != NULL)
             {
@@ -146,7 +146,7 @@ void *internal_medalloc(size_t size, int *err)
     {
         if (current_node->magic != MAGIC_NUMBER)
         {
-            printf("Nodes are corrupted in multiblock allocation\n");
+            printf_debug("Nodes are corrupted in multiblock allocation\n");
             *err = ERR_CORRUPTED_NODE;
             return NULL;
         }
@@ -167,7 +167,7 @@ void *internal_medalloc(size_t size, int *err)
                     // We've found enough space, now merge the nodes
 
                     // Mark all the intermediate nodes as used
-                    printf("Merging nodes\n");
+                    printf_debug("Merging nodes\n");
                     block_t *tmp = current_node;
                     while (tmp != internal_current_block->next)
                     {
@@ -192,7 +192,7 @@ void *internal_medalloc(size_t size, int *err)
     }
 
     // If we can't find any available or mergeable space
-    // printf("Memory allocation failed, not enough free space\n");
+    // printf_debug("Memory allocation failed, not enough free space\n");
     // expand_medium_region();
     *err = ERR_NO_SPACE;
     return NULL;
@@ -224,10 +224,10 @@ int medfree(void *ptr)
 // Function to step through nodes and print their details
 void *step_through_nodes(void)
 {
-    printf("Stepping through nodes\n");
+    printf_debug("Stepping through nodes\n");
 
     size_t num_nodes = current_nodes_heap_size / sizeof(block_t); // Calculate number of nodes
-    printf("Total number of nodes: %ld\n", num_nodes - 1);
+    printf_debug("Total number of nodes: %ld\n", num_nodes - 1);
 
     block_t *current_node = (block_t *)nodes; // Start from the first node
     void *end_adder = NULL;
@@ -235,23 +235,23 @@ void *step_through_nodes(void)
     {
         if (current_node == NULL)
         {
-            printf("Node %ld is NULL, something is wrong\n", i);
+            printf_debug("Node %ld is NULL, something is wrong\n", i);
 
             break;
         }
         else if (current_node->magic != MAGIC_NUMBER)
         {
-            printf("  ERROR: Magic number does not match!\n");
-            printf("  Traversed through %ld nodes of %ld\n", i, num_nodes - 1);
+            printf_debug("  ERROR: Magic number does not match!\n");
+            printf_debug("  Traversed through %ld nodes of %ld\n", i, num_nodes - 1);
             break;
         }
         else if (current_node->next == NULL)
         {
-             printf("Node %ld: \n", i);
-            printf("  Free: %s\n", current_node->free ? "true" : "false");
-            printf("  Size: %ld\n", current_node->size);
-            printf("  Region: %p\n", current_node->region);
-            printf("  Magic: %x\n", current_node->magic);
+             printf_debug("Node %ld: \n", i);
+            printf_debug("  Free: %s\n", current_node->free ? "true" : "false");
+            printf_debug("  Size: %ld\n", current_node->size);
+            printf_debug("  Region: %p\n", current_node->region);
+            printf_debug("  Magic: %x\n", current_node->magic);
             end_adder = current_node->region;
 
             // Sanity check: Ensure that the node has the correct magic number
@@ -263,7 +263,7 @@ void *step_through_nodes(void)
 
     if (end_adder != NULL)
     {
-        printf("Node %ld: \n", num_nodes - 1);
+        printf_debug("Node %ld: \n", num_nodes - 1);
         if (end_adder == NULL)
         {
             return NULL;
@@ -278,13 +278,13 @@ void display_medalloc_region(block_t *data,size_t check_size)
 {
     for (size_t i = 0; i < data->size+check_size; i++)
     {
-        printf("%x",((char *)(data->region))[i]);
+        printf_debug("%x",((char *)(data->region))[i]);
         if(i == data->size)
         {
-            printf("|NEXT %ld BYTES|",check_size);
+            printf_debug("|NEXT %ld BYTES|",check_size);
         }
     }
-    printf("\n");
+    printf_debug("\n");
     
 }
 
@@ -299,7 +299,9 @@ medium_analysis_t *find_invalid_nodes(const void *ptr_find)
     size_t medium_allocated_space = 0;
     size_t total_space = 0;
     size_t i = 0;
+    #ifdef DEBUG
     void *last_region = 0;
+    #endif
     bool exit_loop = false;
 
     while (current_node != NULL && !exit_loop)
@@ -307,20 +309,20 @@ medium_analysis_t *find_invalid_nodes(const void *ptr_find)
         // Bounds check
         if ((void *)current_node < (void *)nodes || (void *)current_node >= (void *)((char *)nodes + current_nodes_heap_size))
         {
-            printf("Node %ld exceeds legal bounds\n", i);
-            printf("\tNode: %p\n", current_node);
-            printf("\tStart: %p\n", nodes);
-            printf("\tEnd: %p\n", (char *)nodes + current_nodes_heap_size);
+            printf_debug("Node %ld exceeds legal bounds\n", i);
+            printf_debug("\tNode: %p\n", current_node);
+            printf_debug("\tStart: %p\n", nodes);
+            printf_debug("\tEnd: %p\n", (char *)nodes + current_nodes_heap_size);
 
             // Attempting to repair the last valid node
             block_t *last_valid_node = (block_t *)nodes + (i - 1);
             if(last_valid_node == NULL)
             {
-                printf("Last valid node is NULL\n");
+                printf_debug("Last valid node is NULL\n");
             }
             else if (last_valid_node->next != NULL)
             {
-                printf("Attempting to repair nodes\n");
+                printf_debug("Attempting to repair nodes\n");
                 last_valid_node->next = NULL;
                 last_valid_node->is_end = true;
             }
@@ -329,29 +331,31 @@ medium_analysis_t *find_invalid_nodes(const void *ptr_find)
         // Check if node is corrupted
         else if (current_node->magic != MAGIC_NUMBER)
         {
-            printf("Node %ld is corrupted\n", i);
+            printf_debug("Node %ld is corrupted\n", i);
             invalid_nodes++;
 
             // Reset to the next node (continue the loop)
             current_node = (block_t *)nodes + i;
             if (current_node == NULL) // Use NULL instead of 0 for pointer checks
             {
-                printf("2. Node %ld is corrupted\n", i);
+                printf_debug("2. Node %ld is corrupted\n", i);
                 exit_loop = true;
             }
         }
         else
         {
-            printf("Region = (%ld)%p: %ld bytes from (%ld)%p\n",i,current_node->region,((char *)current_node->region-(char *)last_region),i-1,last_region);
+            printf_debug("Region = (%ld)%p: %ld bytes from (%ld)%p\n",i,current_node->region,((char *)current_node->region-(char *)last_region),i-1,last_region);
             if(current_node->region != NULL && ptr_find == current_node->region)
             {
-                printf("Found region\n");
+                printf_debug("Found region\n");
                 display_medalloc_region(current_node,5);
-                printf("\n");
+                printf_debug("\n");
                 
             }
+            #ifdef DEBUG
             
             last_region = current_node->region;
+            #endif
             // Valid node
             if (!current_node->free) // Node is allocated
             {

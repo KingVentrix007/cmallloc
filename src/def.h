@@ -28,6 +28,11 @@
 #define MAGIC_NUMBER 0x5464
 
 
+#ifdef DEBUG
+    #define printf_debug(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+    #define printf_debug(fmt, ...) // Do nothing if DEBUG is not defined
+#endif
 
 
 

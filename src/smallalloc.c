@@ -18,23 +18,23 @@ int init_count = 0;
 void *small_malloc(size_t size) {
     if(memory_small_heap_initiated != true)
     {
-        // printf("Setting up memory heap\n");
+        // printf_debug("Setting up memory heap\n");
         int ret = init_small_memory_heap(); // Initialize the memory heap
         if(ret != 0)
         {
-            printf("Failed to initialize the memory heap %d\n",ret);
+            printf_debug("Failed to initialize the memory heap %d\n",ret);
             return NULL;
         }
         memory_small_heap_initiated = true;
         init_count++;
         if(init_count > 1)
         {
-            printf("There is a problem\n");
+            printf_debug("There is a problem\n");
             return NULL;
         }
     }
     #ifdef PRINTF_DEBUG
-    printf("Allocating memory of size %ld\n",size);
+    printf_debug("Allocating memory of size %ld\n",size);
     #endif
     return salloc(size);
 }
@@ -43,7 +43,7 @@ void *salloc(size_t size)
     size+=sizeof(memory_alloc_t);
     size_t num_blocks_needed = (size + SMALL_BLOCK_SIZE - 1) / SMALL_BLOCK_SIZE;
     #ifdef PRINTF_DEBUG
-    printf("Trying to allocate %ld blocks of %d bytes for %ld sized region\n",num_blocks_needed,SMALL_BLOCK_SIZE,size);
+    printf_debug("Trying to allocate %ld blocks of %d bytes for %ld sized region\n",num_blocks_needed,SMALL_BLOCK_SIZE,size);
     #endif
     bool found_start = false;
     size_t start_byte_index = 0;
@@ -53,7 +53,7 @@ void *salloc(size_t size)
     int end_bit_index = 0;
     #endif
     size_t num_found_bits = 0;
-    printf("%p\n",bitmap);
+    printf_debug("%p\n",bitmap);
     for (size_t i = 0; i < SMALL_HEAP_BITMAP_SIZE; i++)
     {
         if(bitmap[i] == 0)
@@ -97,14 +97,14 @@ void *salloc(size_t size)
                     found_start = false;
                 }
                 #ifdef PRINTF_DEBUG
-                printf("Checked Byte %zu, Bit %d: %d", i, bit_index, bit);
+                printf_debug("Checked Byte %zu, Bit %d: %d", i, bit_index, bit);
                 if(bit == 0)
                 {
-                    printf(" Valid\n");
+                    printf_debug(" Valid\n");
                 }
                 else
                 {
-                    printf(" Invalid\n");
+                    printf_debug(" Invalid\n");
                 }
                 #endif
             }
@@ -112,8 +112,8 @@ void *salloc(size_t size)
         if(num_found_bits >= num_blocks_needed)
         {
             #ifdef PRINTF_DEBUG
-            printf("Found %zu bits, starting at byte %zu, bit %d ending at byte %zu, bit %d\n", num_found_bits, start_byte_index, start_bit_index, end_byte_index, end_bit_index);
-            printf("Allocted region of memory of size %ld\n",num_found_bits*SMALL_BLOCK_SIZE);
+            printf_debug("Found %zu bits, starting at byte %zu, bit %d ending at byte %zu, bit %d\n", num_found_bits, start_byte_index, start_bit_index, end_byte_index, end_bit_index);
+            printf_debug("Allocted region of memory of size %ld\n",num_found_bits*SMALL_BLOCK_SIZE);
             #endif
             void *adder = small_heap + (start_byte_index * 8 + (size_t)start_bit_index) * SMALL_BLOCK_SIZE;
 
@@ -127,7 +127,7 @@ void *salloc(size_t size)
                 uint8_t bit = (bitmap[current_byte] >> (7 - current_bit)) & 1;
                 if(bit != 1)
                 {
-                    printf("Byte %zu, Bit %d: %d Is not set\n", current_byte, current_bit, bit);
+                    printf_debug("Byte %zu, Bit %d: %d Is not set\n", current_byte, current_bit, bit);
                 }
                 bits_to_set--;
                 current_bit++;
@@ -144,7 +144,7 @@ void *salloc(size_t size)
             while (bits_to_set > 0) 
             {
                 uint8_t bit = (bitmap[current_byte] >> (7 - current_bit)) & 1;
-                printf("Byte %zu, Bit %d: %d\n", current_byte, current_bit, bit);
+                printf_debug("Byte %zu, Bit %d: %d\n", current_byte, current_bit, bit);
                 bits_to_set--;
                 current_bit++;
                 if (current_bit == 8) {
@@ -160,7 +160,7 @@ void *salloc(size_t size)
             data.magic = MAGIC_NUMBER;
             memcpy(adder, &data, sizeof(memory_alloc_t));
             #ifdef PRINTF_DEBUG
-            printf("data %p\n",data.ptr);
+            printf_debug("data %p\n",data.ptr);
             #endif
 
             return data.ptr;
@@ -176,17 +176,17 @@ void print_bits(size_t start_bit, size_t num_bits) {
     size_t byte_pos = start_bit / 8;
     size_t bit_pos = start_bit % 8;
     for (size_t i = 0; i < num_bits; i++) {
-        printf("%d", (bitmap[byte_pos] & (1 << (7 - bit_pos))) ? 1 : 0);
+        printf_debug("%d", (bitmap[byte_pos] & (1 << (7 - bit_pos))) ? 1 : 0);
         bit_pos++;
         if (bit_pos == 8) {
             bit_pos = 0;
             byte_pos++;
         }
         if ((i + 1) % 8 == 0) {
-            printf(" ");
+            printf_debug(" ");
         }
     }
-    printf("\n");
+    printf_debug("\n");
 }
 
 /**
@@ -213,43 +213,53 @@ int small_free(void *ptr)
     memory_alloc_t *data = (memory_alloc_t *)((char *)ptr - sizeof(memory_alloc_t));
     if(data->magic != MAGIC_NUMBER)
     {
-        printf("Data struct is invalid\n");
+        #ifdef DEBUG
+        printf_debug("Data struct is invalid\n");
+        #endif
         return -1;
     }
     ptr = (char *)ptr - sizeof(memory_alloc_t);
-    printf("data %p\n", data->ptr);
+
+    // printf_debug("data %p\n", data->ptr);
 
     size_t num_blocks_needed = (data->size + sizeof(memory_alloc_t) + SMALL_BLOCK_SIZE - 1) / SMALL_BLOCK_SIZE;
 
     size_t block_number = ((uintptr_t)ptr - (uintptr_t)small_heap) / SMALL_BLOCK_SIZE;
 size_t start_byte_index = block_number / 8;
 size_t start_bit_index = block_number % 8;
-    printf("Starting at byte %zu, bit %zu\n", start_byte_index, start_bit_index);
-
+    #ifdef DEBUG
+    printf_debug("Starting at byte %zu, bit %zu\n", start_byte_index, start_bit_index);
+    #endif
     size_t bits_to_set = num_blocks_needed;
     size_t current_byte = start_byte_index;
     int current_bit = start_bit_index;
-    printf("Unsetting %zu bits\n", bits_to_set);
+    #ifdef DEBUG
+    printf_debug("Unsetting %zu bits\n", bits_to_set);
+    #endif
 
     while (bits_to_set > 0)
     {
         if (current_byte >= sizeof(bitmap)) {
-            printf("Error: Byte index out of bounds\n");
+            printf_debug("Error: Byte index out of bounds\n");
             return -1;
         }
         
         uint8_t mask = ~(1 << (7 - current_bit));
 
         bitmap[current_byte] &= mask;  // Unset the bit
+         #ifdef DEBUG
         uint8_t new_bit = (bitmap[current_byte] >> (7 - current_bit)) & 1;
+        #endif
         if ((bitmap[current_byte] & (1 << (7 - current_bit))) != 0)
         {
-            printf("Error: Bit %d in byte %zu is still set\n", current_bit, current_byte);
+            #ifdef DEBUG
+            printf_debug("Error: Bit %d in byte %zu is still set\n", current_bit, current_byte);
+            #endif
             return -1;
         }
-        // printf("Cleared bit %d in byte %zu, bitmap[current_byte] == 0x%02X\n", current_bit, current_byte, bitmap[current_byte]);
+        // printf_debug("Cleared bit %d in byte %zu, bitmap[current_byte] == 0x%02X\n", current_bit, current_byte, bitmap[current_byte]);
         #ifdef DEBUG
-        printf("Byte %ld, Bit %d: %d\n", current_byte, current_bit, new_bit);
+        printf_debug("Byte %ld, Bit %d: %d\n", current_byte, current_bit, new_bit);
         #endif
         bits_to_set--;
         current_bit++;
@@ -262,18 +272,16 @@ size_t start_bit_index = block_number % 8;
 }
 
 
-int sfree(void *ptr)
-{
-    printf("%p\n",ptr);
-    return 0;
-}
+
 
 size_t get_smallalloc_size(const void *ptr)
 {
     const memory_alloc_t *data = (memory_alloc_t *)((char *)ptr - sizeof(memory_alloc_t));
     if(data->magic != MAGIC_NUMBER)
     {
-        printf("Data struct is invalid\n");
+        #ifdef DEBUG
+        printf_debug("Data struct is invalid\n");
+        #endif
         return 0;
     }
     else

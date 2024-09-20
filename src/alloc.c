@@ -30,7 +30,7 @@ void free(void *ptr)
 void *realloc(void *ptr,size_t new_size)
 {
     size_t old_size = get_size_cmalloc(ptr);
-    return crealloc(ptr,old_size,new_size)
+    return crealloc(ptr,old_size,new_size);
 }
 void *calloc(size_t __nmemb, size_t __size)
 {
@@ -43,17 +43,19 @@ void *calloc(size_t __nmemb, size_t __size)
 void *cmalloc(size_t size)
 {
     // int 0;
-    // printf("Calling cmalloc\n");
+    // printf_debug("Calling cmalloc\n");
     long page_size = sysconf(_SC_PAGESIZE);
     if(size < ALLOC_THRESHOLD)
     {
         if(memory_small_heap_initiated != true)
         {
-            // printf("Setting up memory heap\n");
+            // printf_debug("Setting up memory heap\n");
             int ret = init_small_memory_heap(); // Initialize the memory heap
             if(ret != 0)
             {
-                printf("Failed to initialize the memory heap %d\n",ret);
+                #ifdef DEBUG
+                printf_debug("Failed to initialize the memory heap %d\n",ret);
+                #endif
                 return NULL;
             }
             small_region_start = small_heap;
@@ -66,11 +68,13 @@ void *cmalloc(size_t size)
     {
         if(memory_medium_heap_initiated != true)
         {
-            // printf("Setting up memory heap\n");
+            // printf_debug("Setting up memory heap\n");
             int ret = init_medium_memory_heap(); // Initialize the memory heap
             if(ret != 0)
             {
-                printf("Failed to initialize the memory heap %d\n",ret);
+                #ifdef DEBUG
+                printf_debug("Failed to initialize the memory heap %d\n",ret);
+                #endif
                 return NULL;
             }
             medium_region_start = medium_heap;
@@ -84,7 +88,9 @@ void *cmalloc(size_t size)
         }
         else
         {
-            printf("ptr is invalid\n");
+            #ifdef DEBUG
+            printf_debug("ptr is invalid\n");
+            #endif
             return NULL;
         }
         
@@ -93,8 +99,9 @@ void *cmalloc(size_t size)
     {
         return large_alloc(size);
     }
-    printf("I have absolutely no idea what you passed to get here\n");
-    // printf("Well this happend\n");
+
+    printf_debug("I have absolutely no idea what you passed to get here\n");
+    // printf_debug("Well this happend\n");
     return NULL;
 }
 

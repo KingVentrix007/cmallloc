@@ -18,4 +18,11 @@ int cfree(void *ptr);
 void *crealloc(void *ptr, unsigned int old_size, unsigned int new_size);
 void* ccalloc(size_t num_elements, size_t element_size) ;
 size_t get_size_cmalloc(const void *ptr);
+#ifdef CMALLOC_LIB
+
+#endif
+void *malloc(size_t size);
+void free(void *ptr);
+void *realloc(void *ptr,size_t new_size);
+void *calloc(size_t __nmemb, size_t __size);
 #endif  
