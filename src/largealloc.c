@@ -15,19 +15,27 @@ bool large_allocations_inited = false;
 size_t max_large_allocations;
 size_t current_number_large_allocations;
 
-void *large_alloc(size_t size)
+int init_large_allocations(void)
 {
     if(large_allocations_inited == false)
     {
         large_allocations = (large_allocs_t *)mmap(NULL, 200 * sizeof(large_allocs_t), PROT_READ | PROT_WRITE,MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         if(large_allocations == MAP_FAILED)
         {
-            return NULL;
+            return -1;
         }
         max_large_allocations = 200;
         current_number_large_allocations = 0;
         large_allocations_inited = true;
                                             
+    }
+    return 0;
+}
+void *large_alloc(size_t size)
+{
+    if(large_allocations_inited == false)
+    {
+        init_large_allocations();
     }
     size_t page_size = sysconf(_SC_PAGESIZE);
     //Convert size to the nearest page size

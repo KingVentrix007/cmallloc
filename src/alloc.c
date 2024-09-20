@@ -21,6 +21,7 @@ void *medium_region_end = NULL; //End address for the medium allocations
 #ifdef CMALLOC_LIB 
 void *malloc(size_t size)
 {
+    // printf("Calling malloc\n");
     return cmalloc(size);
 }
 void free(void *ptr)
@@ -30,20 +31,40 @@ void free(void *ptr)
 void *realloc(void *ptr,size_t new_size)
 {
     size_t old_size = get_size_cmalloc(ptr);
+    if(old_size == 0)
+    {
+        return NULL;
+    }
     return crealloc(ptr,old_size,new_size);
 }
 void *calloc(size_t __nmemb, size_t __size)
 {
     return ccalloc(__nmemb,__size);
 }
+__attribute__((constructor))
+void cmalloc_init() {
+    // Try minimal code first
+    // printf("cmalloc.so initialized\n");
+    int small_ret = init_small_memory_heap();
+    int med_ret = init_medium_memory_heap();
+    int large_ret = init_large_allocations();
+    if(small_ret != 0 || med_ret != 0 || large_ret != 0)
+    {
+        _exit(-1);
+    }
+    small_region_start = small_heap;
+    small_region_end = small_heap+current_small_heap_size;
+    medium_region_start = medium_heap;
+    medium_region_end = medium_heap+current_medium_heap_size;
+}
+
 #endif
 
 
 
 void *cmalloc(size_t size)
 {
-    // int 0;
-    // printf_debug("Calling cmalloc\n");
+    
     long page_size = sysconf(_SC_PAGESIZE);
     if(size < ALLOC_THRESHOLD)
     {
@@ -101,13 +122,17 @@ void *cmalloc(size_t size)
     }
 
     printf_debug("I have absolutely no idea what you passed to get here\n");
-    // printf_debug("Well this happend\n");
+    
     return NULL;
 }
 
 
 size_t get_size_cmalloc(const void *ptr)
 {
+    if(small_region_start == NULL || small_region_end == NULL || medium_region_start == NULL || medium_region_end)
+    {
+        return 0;
+    }
     if(ptr == NULL)
     {
         return 0;
@@ -125,7 +150,6 @@ size_t get_size_cmalloc(const void *ptr)
         return get_large_alloc_size(ptr);
         
     }
-    return 0;
 }
 
 int cfree(void *ptr)
@@ -150,6 +174,10 @@ int cfree(void *ptr)
 
 void *crealloc(void *ptr, unsigned int old_size, unsigned int new_size)
 {
+    if(memory_medium_heap_initiated == false || memory_small_heap_initiated == false)
+    {
+        return NULL;
+    }
     void * new_adder = cmalloc(new_size);
     if(new_adder == NULL)
     {

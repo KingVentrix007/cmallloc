@@ -3,3 +3,5 @@ obj/
 .exe
 .vscode
 tests
+obj_tests/
+obj_build/

@@ -7,7 +7,7 @@ GCC = gcc
 COMMON_FLAGS = -Wall -Wextra -Werror -Wshadow -Wstrict-prototypes -Wcast-align \
                -Wpointer-arith -Wformat=2 -Wundef -Wstrict-aliasing=2 -Wbad-function-cast \
                -Wnull-dereference -Walloc-size-larger-than=1000000 -Wmissing-prototypes
-GCC_FLAGS = $(COMMON_FLAGS) -fPIC -DCMALLOC_LIB -DDEBUG
+GCC_FLAGS = $(COMMON_FLAGS) -fPIC -DCMALLOC_LIB
 LD_FLAGS = -shared
 
 # Directories

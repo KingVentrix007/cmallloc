@@ -113,11 +113,8 @@ void *internal_medalloc(size_t size, int *err)
         if (current_node->magic != MAGIC_NUMBER)
         {
             printf_debug("Nodes(Number %ld) are corrupted in single block allocation\n", single_node_counter);
-            medium_analysis_t *allocs = find_invalid_nodes(NULL);
-            if(allocs != NULL)
-            {
-                free(allocs);
-            }
+            find_invalid_nodes(NULL);
+
             
 
 
@@ -131,7 +128,7 @@ void *internal_medalloc(size_t size, int *err)
         {
             current_node->free = false;
             *err = 0;
-            return (void *)current_node->region;
+            return current_node->region;
         }
         single_node_counter++;
         current_node = current_node->next;
@@ -205,7 +202,6 @@ int medfree(void *ptr)
     {
         return ERR_NULL_PTR;
     }
-
     block_t *current_node = (block_t *)nodes;
     while (current_node != NULL)
     {
@@ -213,9 +209,18 @@ int medfree(void *ptr)
         {
             current_node->free = true;
             allocated_space -= current_node->size;
+            allocated_space -= current_node->size;
             return 0;
         }
-        current_node = current_node->next;
+        if(current_node->next != NULL)
+        {
+            current_node = current_node->next;
+        }
+        else
+        {
+            return ERR_NOT_FOUND;
+        }
+       
     }
 
     return ERR_NOT_FOUND;
@@ -289,7 +294,7 @@ void display_medalloc_region(block_t *data,size_t check_size)
 }
 
 //Searches for nodes that are invalid. 
-medium_analysis_t *find_invalid_nodes(const void *ptr_find)
+void find_invalid_nodes(const void *ptr_find)
 {
     //!WARNING
     // This code operates under the assumption that all of the node region was zero'd
@@ -345,7 +350,7 @@ medium_analysis_t *find_invalid_nodes(const void *ptr_find)
         else
         {
             printf_debug("Region = (%ld)%p: %ld bytes from (%ld)%p\n",i,current_node->region,((char *)current_node->region-(char *)last_region),i-1,last_region);
-            if(current_node->region != NULL && ptr_find == current_node->region)
+            if(current_node->region != NULL && ptr_find != NULL && ptr_find == current_node->region)
             {
                 printf_debug("Found region\n");
                 display_medalloc_region(current_node,5);
@@ -369,7 +374,6 @@ medium_analysis_t *find_invalid_nodes(const void *ptr_find)
         i++;
     }
 
-    return NULL;
 }
 
 
