@@ -107,7 +107,7 @@ size_t get_size_cmalloc(const void *ptr)
     }
     else if(ptr >= small_region_start && ptr < small_region_end)
     {
-        /* code */
+        return get_smallalloc_size(ptr);
     }
     else if(ptr >= medium_region_start && ptr < medium_region_end)
     {

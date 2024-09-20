@@ -27,6 +27,7 @@ void *step_through_nodes(void);
 void *internal_medalloc(size_t size, int *err);
 medium_analysis_t *find_invalid_nodes(const void *ptr_find);
 size_t get_medalloc_size(const void *ptr);
+void display_medalloc_region(block_t *data,size_t check_size);
 extern uint8_t  *medium_heap; // The memory heap for allocations 
 extern uint8_t *nodes; // The nodes for the small memory heap;
 extern size_t current_medium_heap_size; // The current size of the memory heap

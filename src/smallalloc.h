@@ -7,7 +7,7 @@
 //Function Prototypes
 void *small_malloc(size_t size);
 int small_free(void *ptr);
-
+size_t get_smallalloc_size(const void *ptr);
 //Private functions
 void *salloc(size_t size);
 int sfree(void *ptr);

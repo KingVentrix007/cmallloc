@@ -267,3 +267,17 @@ int sfree(void *ptr)
     printf("%p\n",ptr);
     return 0;
 }
+
+size_t get_smallalloc_size(void *ptr)
+{
+    const memory_alloc_t *data = (memory_alloc_t *)((char *)ptr - sizeof(memory_alloc_t));
+    if(data->magic != MAGIC_NUMBER)
+    {
+        printf("Data struct is invalid\n");
+        return 0;
+    }
+    else
+    {
+        return data->size;
+    }
+}

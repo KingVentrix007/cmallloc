@@ -29,7 +29,11 @@ void *medalloc(size_t size)
     size+=1;
     size_t loop_count = 0;
     void *ptr = internal_medalloc(size, &error);
-
+    if(ptr != NULL && error == 0)
+    {
+        allocated_space += size;
+        return ptr;
+    }
     // Retry allocation if there is no space
     while (error == ERR_NO_SPACE)
     {
@@ -232,33 +236,28 @@ void *step_through_nodes(void)
         if (current_node == NULL)
         {
             printf("Node %ld is NULL, something is wrong\n", i);
+
             break;
         }
-
-        // Print details about the current node
-        printf("Node %ld: \n", i);
-        printf("  Free: %s\n", current_node->free ? "true" : "false");
-        printf("  Size: %ld\n", current_node->size);
-        printf("  Region: %p\n", current_node->region);
-        printf("  Magic: %x\n", current_node->magic);
-        end_adder = current_node->region;
-
-        // Sanity check: Ensure that the node has the correct magic number
-        if (current_node->magic != MAGIC_NUMBER)
+        else if (current_node->magic != MAGIC_NUMBER)
         {
             printf("  ERROR: Magic number does not match!\n");
             printf("  Traversed through %ld nodes of %ld\n", i, num_nodes - 1);
             break;
         }
-
-        // Move to the next node
-        current_node = current_node->next;
-
-        // If the next pointer is NULL and we're not at the end, we stop early
-        if (current_node == NULL && i != num_nodes - 2)
+        else if (current_node->next == NULL)
         {
-            printf("Early termination: Node %ld's next pointer is NULL\n", i);
-            break;
+             printf("Node %ld: \n", i);
+            printf("  Free: %s\n", current_node->free ? "true" : "false");
+            printf("  Size: %ld\n", current_node->size);
+            printf("  Region: %p\n", current_node->region);
+            printf("  Magic: %x\n", current_node->magic);
+            end_adder = current_node->region;
+
+            // Sanity check: Ensure that the node has the correct magic number
+            
+            // Move to the next node
+            current_node = current_node->next;
         }
     }
 
@@ -273,6 +272,20 @@ void *step_through_nodes(void)
     }
 
     return NULL;
+}
+
+void display_medalloc_region(block_t *data,size_t check_size)
+{
+    for (size_t i = 0; i < data->size+check_size; i++)
+    {
+        printf("%x",((char *)(data->region))[i]);
+        if(i == data->size)
+        {
+            printf("|NEXT %ld BYTES|",check_size);
+        }
+    }
+    printf("\n");
+    
 }
 
 //Searches for nodes that are invalid. 
@@ -320,7 +333,7 @@ medium_analysis_t *find_invalid_nodes(const void *ptr_find)
             invalid_nodes++;
 
             // Reset to the next node (continue the loop)
-            current_node = (block_t *)nodes + i; // Correct pointer arithmetic
+            current_node = (block_t *)nodes + i;
             if (current_node == NULL) // Use NULL instead of 0 for pointer checks
             {
                 printf("2. Node %ld is corrupted\n", i);
@@ -333,21 +346,7 @@ medium_analysis_t *find_invalid_nodes(const void *ptr_find)
             if(current_node->region != NULL && ptr_find == current_node->region)
             {
                 printf("Found region\n");
-                for (size_t j = 0; j < current_node->size+5; j++)
-                {
-                    
-                    printf("%x",((char *)current_node->region)[j]);
-                    if(j == current_node->size)
-                    {
-                        printf("NExt 5 bytes:\n");
-                    }
-                    
-                }
-                // printf("\nNext 5 bytes\n");
-                // for (size_t j = current_node->size; j < current_node->size+5; j++)
-                // {
-                //     printf("%x",((char *)current_node->region)[j]);
-                // }
+                display_medalloc_region(current_node,5);
                 printf("\n");
                 
             }

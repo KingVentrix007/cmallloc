@@ -133,7 +133,7 @@ int setup_nodes() {
 
         current_node->magic = MAGIC_NUMBER;
 
-        block_t *check = (block_t *)(nodes + i * sizeof(block_t));
+        const block_t *check = (block_t *)(nodes + i * sizeof(block_t));
         if (check == NULL) {
             printf("Error: Check is NULL\n");
             return ERR_NODES_SETUP_FAILED;
