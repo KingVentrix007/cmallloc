@@ -26,12 +26,14 @@ size_t allocated_space = 0;
 void *medalloc(size_t size)
 {
     int error;
+    size+=1;
     size_t loop_count = 0;
     void *ptr = internal_medalloc(size, &error);
 
     // Retry allocation if there is no space
     while (error == ERR_NO_SPACE)
     {
+        printf("Attempting to expand memory\n");
         int ret = expand_medium_region();
         if(ret != 0)
         {
@@ -39,6 +41,23 @@ void *medalloc(size_t size)
             return NULL;
         }
         ptr = internal_medalloc(size, &error);
+        if(ptr != NULL)
+        {
+            memset(ptr,1,size);
+            // memcmp
+            char *test_ptr = (char *)ptr;
+            memset(test_ptr,1,size);
+            printf("Size %ld\n",size);
+            for (size_t i = 0; i < size; i++)
+            {
+                if(test_ptr[i] != 1)
+                {
+                    printf("Failed alloc\n");
+                    return NULL;
+                }
+            }
+            
+        }
         loop_count++;
         if (loop_count >= 100)
         {
@@ -90,19 +109,12 @@ void *internal_medalloc(size_t size, int *err)
         if (current_node->magic != MAGIC_NUMBER)
         {
             printf("Nodes(Number %ld) are corrupted in single block allocation\n", single_node_counter);
-            medium_analysis_t *allocs = find_invalid_nodes();
-            printf("Analysis of medium heap\n");
-            printf("\tCorrupted Nodes: %ld\n",allocs->invalid_nodes);
-            printf("\tAllocated Nodes: %ld\n",allocs->allocated_nodes);
-
-            printf("\tAllocated Space: %ld\n",allocs->allocated_space);
+            medium_analysis_t *allocs = find_invalid_nodes(NULL);
+            if(allocs != NULL)
+            {
+                free(allocs);
+            }
             
-            printf("\tTotal space:      %ld\n",current_medium_heap_size);
-            printf("\tTotal Node space: %ld\n",allocs->total_space);
-            printf("\tNode space exceeds total space: %s (Total Space: %zu, Medium Heap Size: %zu)\n",
-            allocs->total_space > current_medium_heap_size ? "true" : "false",
-            allocs->total_space, current_medium_heap_size);
-            free(allocs);
 
 
             
@@ -151,6 +163,7 @@ void *internal_medalloc(size_t size, int *err)
                     // We've found enough space, now merge the nodes
 
                     // Mark all the intermediate nodes as used
+                    printf("Merging nodes\n");
                     block_t *tmp = current_node;
                     while (tmp != internal_current_block->next)
                     {
@@ -176,6 +189,7 @@ void *internal_medalloc(size_t size, int *err)
 
     // If we can't find any available or mergeable space
     // printf("Memory allocation failed, not enough free space\n");
+    // expand_medium_region();
     *err = ERR_NO_SPACE;
     return NULL;
 }
@@ -262,7 +276,7 @@ void *step_through_nodes(void)
 }
 
 //Searches for nodes that are invalid. 
-medium_analysis_t *find_invalid_nodes()
+medium_analysis_t *find_invalid_nodes(void *ptr_find)
 {
     //!WARNING
     // This code operates under the assumption that all of the node region was zero'd
@@ -272,6 +286,7 @@ medium_analysis_t *find_invalid_nodes()
     size_t medium_allocated_space = 0;
     size_t total_space = 0;
     size_t i = 0;
+    void *last_region = 0;
     bool exit_loop = false;
 
     while (current_node != NULL && !exit_loop)
@@ -314,6 +329,23 @@ medium_analysis_t *find_invalid_nodes()
         }
         else
         {
+            printf("Region = (%ld)%p: %ld bytes from (%ld)%p\n",i,current_node->region,((char *)current_node->region-(char *)last_region),i-1,last_region);
+            if(ptr_find == current_node->region)
+            {
+                printf("Found region\n");
+                for (size_t j = 0; j < current_node->size; j++)
+                {
+                    printf("%x",((char *)current_node->region)[j]);
+                }
+                printf("\nNext 5 bytes\n");
+                for (size_t j = current_node->size; j < current_node->size+5; j++)
+                {
+                    printf("%x",((char *)current_node->region)[j]);
+                }
+                printf("\n");
+                
+            }
+            last_region = current_node->region;
             // Valid node
             if (!current_node->free) // Node is allocated
             {
@@ -323,21 +355,24 @@ medium_analysis_t *find_invalid_nodes()
             total_space+=current_node->size;
             current_node = current_node->next; // Move to next node
         }
-
+    
         i++;
     }
 
-    // Allocate and populate the analysis struct
-    medium_analysis_t *analysis = malloc(sizeof(medium_analysis_t));
-    if (analysis == NULL)
-    {
-        printf("Memory allocation failed for analysis struct\n");
-        return NULL; // Handle malloc failure
-    }
+    return NULL;
+}
 
-    analysis->allocated_nodes = allocated_nodes;
-    analysis->allocated_space = medium_allocated_space;
-    analysis->invalid_nodes = invalid_nodes;
-    analysis->total_space = total_space;
-    return analysis;
+
+size_t get_medalloc_size(const void *ptr)
+{
+     block_t *current_node = (block_t *)nodes;
+     while(current_node != NULL)
+     {
+        if(current_node->region == ptr || current_node->magic == MAGIC_NUMBER)
+        {
+            return current_node->size;
+        }
+        current_node = current_node->next;
+     }
+
 }

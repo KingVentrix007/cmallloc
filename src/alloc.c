@@ -18,6 +18,17 @@ void *small_region_end = NULL;// End address for the small allocations
 void *medium_region_start = NULL; //Start address for the medium allocations
 void *medium_region_end = NULL; //End address for the medium allocations
 
+#ifdef CMALLOC_LIB 
+void *malloc(size_t size)
+{
+    return cmalloc(size);
+}
+void free(void *ptr)
+{
+    cfree(ptr);
+}
+void *realloc(void *ptr,size_t old_size)
+#endif
 
 
 
@@ -45,7 +56,6 @@ void *cmalloc(size_t size)
     }
     else if (size >= ALLOC_THRESHOLD && size <= (size_t)page_size)
     {
-        // printf("Med alloc\n");
         if(memory_medium_heap_initiated != true)
         {
             // printf("Setting up memory heap\n");
@@ -66,7 +76,7 @@ void *cmalloc(size_t size)
         }
         else
         {
-            printf("ptr is invalid\v");
+            printf("ptr is invalid\n");
             return NULL;
         }
         
@@ -78,6 +88,28 @@ void *cmalloc(size_t size)
     printf("I have absolutely no idea what you passed to get here\n");
     // printf("Well this happend\n");
     return NULL;
+}
+
+
+size_t get_size_cmalloc(const void *ptr)
+{
+    if(ptr == NULL)
+    {
+        return 0;
+    }
+    else if(ptr >= small_region_start && ptr < small_region_end)
+    {
+        /* code */
+    }
+    else if(ptr >= medium_region_start && ptr < medium_region_end)
+    {
+        return get_medalloc_size(ptr);
+    }
+    else
+    {
+        
+    }
+    
 }
 
 int cfree(void *ptr)
@@ -112,6 +144,8 @@ void *crealloc(void *ptr, unsigned int old_size, unsigned int new_size)
     cfree(ptr);
     return new_adder;
 }
+
+
 
 void* ccalloc(size_t num_elements, size_t element_size) {
     // Calculate total memory required
